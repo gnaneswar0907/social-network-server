@@ -3,81 +3,90 @@ const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-const userSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    required: true,
-    trim: true,
-    validate(value) {
-      if (!validator.isAlpha(value)) {
-        throw new Error("must contain only alphabet");
+const userSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+      validate(value) {
+        if (!validator.isAlpha(value)) {
+          throw new Error("must contain only alphabet");
+        }
       }
-    }
-  },
-  lastName: {
-    type: String,
-    required: true,
-    trim: true,
-    validate(value) {
-      if (!validator.isAlpha(value)) {
-        throw new Error("must contain only alphabet");
+    },
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+      validate(value) {
+        if (!validator.isAlpha(value)) {
+          throw new Error("must contain only alphabet");
+        }
       }
-    }
-  },
-  email: {
-    type: String,
-    required: true,
-    trim: true,
-    lowercase: true,
-    unique: true,
-    validate(value) {
-      if (!validator.isEmail(value)) {
-        throw new Error("must be a vaild email address");
+    },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("must be a vaild email address");
+        }
       }
-    }
-  },
-  handle: {
-    type: String,
-    required: true,
-    trim: true,
-    unique: true
-  },
-  gender: {
-    type: String,
-    default: "male",
-    enum: ["male", "female"]
-  },
-  mobile: {
-    type: String,
-    required: true,
-    validate(value) {
-      if (!validator.isMobilePhone(value)) {
-        throw new Error("must be a vaild phone number");
+    },
+    handle: {
+      type: String,
+      required: true,
+      trim: true,
+      unique: true
+    },
+    gender: {
+      type: String,
+      default: "male",
+      enum: ["male", "female"]
+    },
+    mobile: {
+      type: String,
+      required: true,
+      validate(value) {
+        if (!validator.isMobilePhone(value)) {
+          throw new Error("must be a vaild phone number");
+        }
       }
-    }
-  },
-  avatar: {
-    type: Buffer
-  },
-  password: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 7,
-    validate(value) {
-      if (validator.contains(value.toLowerCase(), "password")) {
-        throw new Error("cannot contain phrase password");
+    },
+    avatar: {
+      type: Buffer
+    },
+    password: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 7,
+      validate(value) {
+        if (validator.contains(value.toLowerCase(), "password")) {
+          throw new Error("cannot contain phrase password");
+        }
       }
-    }
-  },
-  tokens: [
-    {
-      token: {
-        type: String,
-        required: true
+    },
+    tokens: [
+      {
+        token: {
+          type: String,
+          required: true
+        }
       }
-    }
-  ]
+    ]
+  },
+  { timestamps: true }
+);
+
+userSchema.virtual("posts", {
+  ref: "Post",
+  localField: "_id",
+  foreignField: "owner"
 });
 
 userSchema.methods.getAuthToken = async function() {
