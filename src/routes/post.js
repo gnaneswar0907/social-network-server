@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Post = require("../models/Post");
+const User = require("../models/User");
 const auth = require("../middleware/auth");
 const multer = require("multer");
 const sharp = require("sharp");
@@ -18,7 +19,7 @@ const upload = multer({
 });
 
 //Create Post
-router.post("/posts", auth, upload.single("postImage"), async (req, res) => {
+router.post("/posts", auth, upload.single("file"), async (req, res) => {
   try {
     const post = new Post({ content: req.body.content, owner: req.user._id });
     if (req.file) {
@@ -26,20 +27,34 @@ router.post("/posts", auth, upload.single("postImage"), async (req, res) => {
         .png()
         .resize(500, 500)
         .toBuffer();
-      post.postImage.contentType = "image/png";
-      post.postImage.file = buffer;
+      post.postImage = buffer.toString("base64");
     }
     await post.save();
-    res.status(201).send({ message: "Post created sucessfully" });
+    const posts = await Post.find({ owner: req.user._id });
+    res.status(201).send(posts);
   } catch (error) {
     res.status(400).send({ error: "Post creation Unsucessful" });
   }
 });
 
-//Get Posts
+//Get All Posts
 router.get("/posts", auth, async (req, res) => {
   try {
-    const posts = await Post.find({ owner: req.user._id });
+    const posts = await Post.find({});
+    if (!posts) {
+      throw new Error();
+    }
+    res.status(200).send(posts);
+  } catch (error) {
+    res.status(404).send({ error: "No Posts Found" });
+  }
+});
+
+//Get User Posts
+router.get("/posts/:username", auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ handle: req.params.username });
+    const posts = await Post.find({ owner: user._id });
     if (!posts) {
       throw new Error();
     }

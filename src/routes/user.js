@@ -2,12 +2,21 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const auth = require("../middleware/auth");
+const fs = require("fs");
+const path = require("path");
+const defaultAvatarPath = path.join(
+  __dirname,
+  "../../public/images/defaultAvatar.jpg"
+);
 
 //Users Sign up
 router.post("/users/signup", async (req, res) => {
   try {
     const user = new User(req.body);
     const token = await user.getAuthToken();
+    const defaultAvatar = fs.readFileSync(defaultAvatarPath);
+    user.avatar = defaultAvatar.toString("base64");
+    await user.save();
     res.status(201).send({ token });
   } catch (error) {
     res.status(400).send({ error: error.message });
@@ -20,7 +29,7 @@ router.post("/users/login", async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findByCredentials(email, password);
     const token = await user.getAuthToken();
-    res.status(200).send({ token });
+    res.status(200).send({ token, user });
   } catch (error) {
     res.status(400).send({ error: error.message });
   }
@@ -45,12 +54,12 @@ router.post("/users/logoutAll", auth, async (req, res) => {
 });
 
 //Get User Profile using User Handle(User Name)
-router.get("/users/:handle", auth, async (req, res) => {
+router.get("/users/:username", auth, async (req, res) => {
   try {
-    const handle = req.params.handle;
+    const handle = req.params.username;
     const user = await User.findOne({ handle });
     if (!user) throw new Error();
-    res.status(200).send({ user });
+    res.status(200).send(user);
   } catch (error) {
     res.status(404).send({ error: "User Not Found" });
   }

@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
       }
     },
     avatar: {
-      type: Buffer
+      type: String
     },
     password: {
       type: String,
@@ -83,21 +83,11 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.virtual("posts", {
-  ref: "Post",
-  localField: "_id",
-  foreignField: "owner"
-});
-
 userSchema.methods.getAuthToken = async function() {
   const user = this;
   const token = jwt.sign(
     {
-      _id: user._id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatar: user.avatar
+      _id: user._id
     },
     process.env.AUTH_SECRET
   );

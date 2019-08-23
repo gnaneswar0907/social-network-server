@@ -8,12 +8,7 @@ const postSchema = new mongoose.Schema(
       trim: true
     },
     postImage: {
-      contentType: {
-        type: String
-      },
-      file: {
-        type: Buffer
-      }
+      type: String
     },
     owner: {
       type: mongoose.Types.ObjectId,
@@ -26,10 +21,20 @@ const postSchema = new mongoose.Schema(
 
 postSchema.methods.toJSON = function() {
   const post = this;
-  post.postImage.file = post.postImage.file.toString("base64");
+  const user = post.user;
   const postObject = post.toObject();
-  return postObject;
+  return { ...postObject, user };
 };
+
+postSchema.pre("find", function() {
+  this.populate("user");
+});
+
+postSchema.virtual("user", {
+  ref: "User",
+  localField: "owner",
+  foreignField: "_id"
+});
 
 const Post = mongoose.model("Post", postSchema);
 
